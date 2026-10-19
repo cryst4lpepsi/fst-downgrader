@@ -17,4 +17,4 @@ Presets already made in 21.2.3 or older are left unchanged. Plugins that don't e
 
 - `fst-core.js`: the converter (works in the browser and in Node).
 - `index.html`: the app.
-- `test/`: Node tests and sample presets. Run them with `npm test` (Node 18+).
+- `test/`: Node tests. They build their presets from scratch (`test/presets.js`), so the repo contains no one else's presets. Run them with `npm test` (Node 18+).
