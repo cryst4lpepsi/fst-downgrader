@@ -29,12 +29,19 @@ test('reports the plugin chain by mixer slot', () => {
   assert.ok(names.includes('7:RDeEsser Stereo'));
 });
 
-test('flags Parametric EQ 2 v8 as newer than FL 21, leaves same-version plugins clean', () => {
+test('relabels Parametric EQ 2 v8 settings as v7, which FL 21 loads without crashing', () => {
   const r = FST.convert(fx('fl25-main.fst'));
-  const eq = r.plugins.find((p) => p.internal === 'Fruity Parametric EQ 2');
-  const comp = r.plugins.find((p) => p.internal === 'Fruity Compressor');
-  assert.strictEqual(eq.status, 'warn');
-  assert.strictEqual(comp.status, 'ok');
+  const eqs = r.plugins.filter((p) => p.internal === 'Fruity Parametric EQ 2');
+  assert.deepStrictEqual(eqs.map((p) => [p.slot, p.status, p.relabelTo]), [[1, 'ok', 7], [4, 'ok', 7], [8, 'ok', 7]]);
+  assert.strictEqual(r.settingsFixed, 3);
+  assert.ok(r.plugins.every((p) => p.status === 'ok'));
+});
+
+test('re-converts a file an earlier version of this tool left with EQ2 at v8', () => {
+  const r = FST.convert(fx('old-tool-main-fl21.fst'));
+  assert.strictEqual(r.status, 'converted');
+  assert.strictEqual(r.settingsFixed, 3);
+  assert.deepStrictEqual(Buffer.from(r.output), Buffer.from(fx('expected-main-fl21.fst')));
 });
 
 test('notes the removed FL 24+ field', () => {
@@ -44,12 +51,12 @@ test('notes the removed FL 24+ field', () => {
 
 test('options can switch each fix off', () => {
   const keep = FST.convert(fx('fl25-main.fst'), { removeUnknown: false, fixWrapper: false });
-  // only the 8 version bytes differ from the original
+  // only the 8 version bytes and the 3 EQ2 version bytes (always fixed) differ from the original
   const orig = fx('fl25-main.fst');
   assert.strictEqual(keep.output.length, orig.length);
   let diff = 0;
   for (let i = 0; i < orig.length; i++) if (orig[i] !== keep.output[i]) diff++;
-  assert.strictEqual(diff, 8);
+  assert.strictEqual(diff, 11);
 });
 
 test('FL21 preset is left alone', () => {

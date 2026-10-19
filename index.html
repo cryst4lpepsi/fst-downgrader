@@ -214,6 +214,7 @@
     }
     if (r.status === 'converted') {
       if (r.removedIds.length) notes.push(`<li>Removed ${r.removedIds.length === 1 ? 'a setting' : r.removedIds.length + ' settings'} FL 21 can't read.</li>`);
+      if (r.settingsFixed) notes.push(`<li>Converted ${r.settingsFixed} plugin${r.settingsFixed > 1 ? 's' : ''}' settings to the FL 21 format.</li>`);
       if (r.wrappersFixed) notes.push(`<li>Converted ${r.wrappersFixed} VST plugin${r.wrappersFixed > 1 ? 's' : ''} to the FL 21 format.</li>`);
     }
     return notes.length ? `<ul class="notes">${notes.join('')}</ul>` : '';

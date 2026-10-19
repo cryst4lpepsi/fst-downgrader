@@ -16,6 +16,10 @@
   // Newest settings format FL 21 writes for each native plugin (first 4 bytes of its state).
   const FL21_STATE_VERSIONS = { '3x Osc': 14, 'Fruity Slicer': 15, 'Fruity PanOMatic': 128, 'Soundgoodizer': 3, 'Fruity Parametric EQ 2': 7, 'Transient Processor': 1, 'Fruity Compressor': 2, 'Fruity Limiter': 7, 'Fruity Fast Dist': 192, 'Pitch Shifter': 7, 'Vintage Chorus': 1, 'Fruity Flanger': 1, 'Patcher': 4, 'EQUO': 4, 'Fruity Delay 3': 1, 'DirectWave': 38, 'Wave Candy': 9, 'Fruity Flangus': 9, 'Fruity Delay Bank': 16, 'Fruity Formula Controller': 4, 'Fruity Balance': 0, 'Fruity Chorus': 1, 'Fruity Stereo Shaper': 0, 'FL Keys': 1, 'Fruity Phaser': 1, 'Harmless': 12, 'FLEX': 1, 'Fruity Vocoder': 2, 'Distructor': 5, 'MIDI Out': 6, 'Fruity NoteBook 2': 0, 'Fruity Soft Clipper': 127, 'Fruity Multiband Compressor': 0, 'Fruity Filter': 2, 'Control Surface': 1, 'Frequency Splitter': 4, 'Fruity Blood Overdrive': 3, 'Fruity Dance': 2, 'Fruit Kick': 1, 'Fruity DX10': 2, 'Fruity Send': 0, 'Frequency Shifter': 4, 'BooBass': 1, 'Fruity Granulizer': 5, 'Transistor Bass': 2, 'Fruity Keyboard Controller': 2, 'Fruity X-Y Controller': 2, 'Razer Chroma': 1, 'Fruity X-Y-Z Controller': 3, 'LuxeVerb': 7, 'Multiband Delay': 4, 'Fruity Squeeze': 0, 'Hyper Chorus': 2, 'Vintage Phaser': 3, 'Fruity LSD': 0, 'Newtime': 1, 'Newtone': 0, 'VFX Color Mapper': 0, 'VFX Key Mapper': 2, 'VFX Level Scaler': 1, 'VFX Sequencer': 2, 'Fruity HTML NoteBook': 1, 'Fruity Spectroman': 100, 'Tuner': 1, 'Fruity DrumSynth Live': 3, 'Dashboard': 2, 'Fruity Voltage Controller': 1, 'ReWired': 1, 'SoundFont Player': 5, 'Kepler': 0, 'BeepMap': 0, 'Plucked!': 128, 'Fruity Video Player': 3 };
 
+  // Newer settings formats whose layout is unchanged from FL 21's, so relabelling the version is
+  // enough. EQ2 v8 (FL 24+) is the same 354 bytes as v7, and FL 21 crashes on the v8 label.
+  const SAME_LAYOUT = { 'Fruity Parametric EQ 2': { version: 8, size: 354 } };
+
   const EV = { VERSION: 199, BUILD: 159, PLUGIN_INTERNAL: 201, PLUGIN_NAME: 203, PLUGIN_STATE: 213, SLOT: 98 };
   const FORMAT_KIND = { 64: 'mixer', 48: 'plugin', 32: 'plugin' };
 
@@ -113,6 +117,9 @@
       } else if (!FL21_PLUGINS.has(p.internal)) {
         p.status = 'missing';
         p.note = `${p.internal} doesn't exist in FL 21, so this slot will be empty.`;
+      } else if (SAME_LAYOUT[p.internal] && p.stateVersion === SAME_LAYOUT[p.internal].version && p.stateEvent.data.length === SAME_LAYOUT[p.internal].size) {
+        p.status = 'ok';
+        p.relabelTo = FL21_STATE_VERSIONS[p.internal];
       } else if (p.internal in FL21_STATE_VERSIONS && p.stateVersion !== null && p.stateVersion < 256 && p.stateVersion > FL21_STATE_VERSIONS[p.internal]) {
         p.status = 'warn';
         p.note = `Settings are saved in a newer format (v${p.stateVersion}; FL 21 uses v${FL21_STATE_VERSIONS[p.internal]}). It may open with default settings.`;
@@ -121,8 +128,9 @@
       }
     }
 
-    const base = { kind, fromVersion, toVersion: TARGET.version, plugins, removedIds: [], wrappersFixed: 0 };
-    if (versionEv && !isNewerThanTarget(fromVersion)) {
+    const base = { kind, fromVersion, toVersion: TARGET.version, plugins, removedIds: [], wrappersFixed: 0, settingsFixed: 0 };
+    // A file already labelled 21.2.3 can still carry newer plugin settings (earlier versions of this tool left EQ2 at v8).
+    if (versionEv && !isNewerThanTarget(fromVersion) && !plugins.some((p) => p.relabelTo !== undefined)) {
       return Object.assign(base, { status: 'compatible', toVersion: fromVersion, output: bytes });
     }
 
@@ -139,6 +147,10 @@
         const b = new Uint8Array(5); b[0] = EV.BUILD; putU32(b, 1, TARGET.build); push(b);
       } else if (opts.removeUnknown && !FL21_EVENT_IDS.has(e.id)) {
         removed.add(e.id);
+      } else if (e.id === EV.PLUGIN_STATE && plugins.some((p) => p.stateEvent === e && p.relabelTo !== undefined)) {
+        const raw = bytes.slice(e.start, e.end);
+        putU32(raw, raw.length - e.data.length, plugins.find((p) => p.stateEvent === e).relabelTo);
+        push(raw); base.settingsFixed++;
       } else if (opts.fixWrapper && e.id === EV.PLUGIN_STATE && plugins.some((p) => p.stateEvent === e && p.internal === 'Fruity Wrapper')
                  && u32(e.data, 0) > FL21_WRAPPER_VERSION && wrapperChunksKnown(e.data)) {
         const raw = bytes.slice(e.start, e.end);
