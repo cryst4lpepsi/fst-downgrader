@@ -4,7 +4,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
-const FST = require('../fst-core.js');
+const FST = require('../src/fst-core.js');
 
 const { preset, utf16, basicChain, vstChain } = require('./presets.js');
 

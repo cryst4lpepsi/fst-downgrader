@@ -152,12 +152,12 @@
   <div class="rack" id="rack" aria-live="polite"></div>
 
   <footer>
-    <p>The converter changes the version stamp to FL 21.2.3, removes settings FL 21 can't read, and relabels VST wrapper data. Plugin settings are copied over unchanged.</p>
+    <p>The converter changes the version stamp to FL 21.2.3, removes settings FL 21 can't read, and relabels VST wrapper and Parametric EQ 2 data so FL 21 accepts it. Other plugin settings are copied over unchanged.</p>
     <p>A yellow light means FL 21 may open that plugin with default settings. A red light means the plugin doesn't exist in FL 21.</p>
   </footer>
 </div>
 
-<script src="fst-core.js"></script>
+<script src="src/fst-core.js"></script>
 <script>
 (function () {
   'use strict';
@@ -214,7 +214,7 @@
     }
     if (r.status === 'converted') {
       if (r.removedIds.length) notes.push(`<li>Removed ${r.removedIds.length === 1 ? 'a setting' : r.removedIds.length + ' settings'} FL 21 can't read.</li>`);
-      if (r.settingsFixed) notes.push(`<li>Converted ${r.settingsFixed} plugin${r.settingsFixed > 1 ? 's' : ''}' settings to the FL 21 format.</li>`);
+      if (r.settingsFixed) notes.push(`<li>Converted ${r.settingsFixed === 1 ? "1 plugin's" : r.settingsFixed + " plugins'"} settings to the FL 21 format.</li>`);
       if (r.wrappersFixed) notes.push(`<li>Converted ${r.wrappersFixed} VST plugin${r.wrappersFixed > 1 ? 's' : ''} to the FL 21 format.</li>`);
     }
     return notes.length ? `<ul class="notes">${notes.join('')}</ul>` : '';

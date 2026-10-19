@@ -4,6 +4,21 @@
   "description": "Convert FL Studio .fst presets saved in newer versions so they open in FL Studio 21.2.3",
   "private": true,
   "scripts": {
-    "test": "node --test test/convert.test.js"
+    "test": "node --test test/convert.test.js test/cli.test.js"
+  },
+  "bin": {
+    "fst-downgrade": "cli.js"
+  },
+  "files": [
+    "cli.js",
+    "src/"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cryst4lpepsi/fst-downgrader.git"
   }
 }
