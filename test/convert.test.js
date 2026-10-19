@@ -3,7 +3,6 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
-const zlib = require('node:zlib');
 const FST = require('../src/fst-core.js');
 
 const { preset, utf16, basicChain, vstChain } = require('./presets.js');
@@ -98,8 +97,15 @@ test('zip writer produces an archive that unzips to the same bytes', () => {
   assert.deepStrictEqual(entries.map((e) => e.name), ['a b.fst', 'ünï.fst']);
   assert.deepStrictEqual(entries[0].data, Buffer.from(a));
   assert.deepStrictEqual(entries[1].data, Buffer.from(b));
-  for (const e of entries) assert.strictEqual(e.crc, zlib.crc32(e.data) >>> 0);
+  for (const e of entries) assert.strictEqual(e.crc, crc32(e.data));
 });
+
+// Bit-by-bit CRC-32, written independently of the converter's table version (zlib.crc32 needs Node 20.15+).
+function crc32(data) {
+  let c = 0xffffffff;
+  for (const byte of data) { c ^= byte; for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); }
+  return (c ^ 0xffffffff) >>> 0;
+}
 
 function readStoredZip(buf) {
   const eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
