@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FST Downgrader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --panel: #dcdfe2;
+    --panel-hi: #e9ebed;
+    --groove: #b8bdc2;
+    --groove-dark: #a3a9af;
+    --ink: #1f2529;
+    --muted: #5b646b;
+    --accent: #e0700b;
+    --accent-ink: #ffffff;
+    --led-ok: #2f9e5b;
+    --led-warn: #d79a00;
+    --led-missing: #c2412d;
+    --led-off: #9aa1a7;
+    --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --text: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --panel: #2c3236; --panel-hi: #353c41; --groove: #22272a; --groove-dark: #1b1f22;
+      --ink: #e4e7e9; --muted: #9aa3a9; --accent: #f08422; --accent-ink: #1b1f22; --led-off: #4c555b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --panel: #2c3236; --panel-hi: #353c41; --groove: #22272a; --groove-dark: #1b1f22;
+    --ink: #e4e7e9; --muted: #9aa3a9; --accent: #f08422; --accent-ink: #1b1f22; --led-off: #4c555b;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--panel); color: var(--ink);
+    font: 400 17px/1.45 var(--text);
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 24px; }
+  h1 { font: 600 44px/1 var(--display); letter-spacing: -0.01em; margin: 0; }
+  .target { margin: 0; color: var(--muted); }
+  .target strong { color: var(--ink); font-weight: 600; }
+
+  .drop {
+    display: grid; place-items: center; text-align: center; gap: 6px;
+    min-height: 168px; padding: 28px 20px; border-radius: 6px; cursor: pointer;
+    background: var(--groove); color: var(--ink);
+    box-shadow: inset 0 2px 0 var(--groove-dark), inset 0 -1px 0 var(--panel-hi);
+    transition: background-color 120ms;
+  }
+  .drop:hover, .drop.over { background: var(--groove-dark); }
+  .drop:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .drop-title { font: 600 26px/1.1 var(--display); }
+  .drop-sub { color: var(--muted); }
+
+  .fixes { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 16px 2px 0; color: var(--muted); font-size: 15px; }
+  .fixes label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .fixes input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 36px 0 14px; min-height: 40px; }
+  .bar h2 { font: 600 22px/1 var(--display); margin: 0; }
+  .bar[hidden] { display: none; }
+
+  .rack { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 14px; }
+
+  .strip {
+    display: flex; flex-direction: column; min-width: 0;
+    background: var(--panel-hi); border-radius: 4px; padding: 14px 12px 12px;
+    box-shadow: 0 1px 0 var(--groove-dark), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .strip-name { font: 600 21px/1.1 var(--display); margin: 0 0 4px; overflow-wrap: anywhere; }
+  .strip-ver { margin: 0 0 12px; font-size: 14px; color: var(--muted); }
+  .strip-ver b { color: var(--ink); font-weight: 600; }
+
+  .slots { list-style: none; margin: 0 0 12px; padding: 4px; background: var(--groove); border-radius: 3px; box-shadow: inset 0 1px 0 var(--groove-dark); }
+  .slot { display: grid; grid-template-columns: 18px 1fr 10px; align-items: center; gap: 8px; padding: 4px 6px; font-size: 15px; line-height: 1.2; }
+  .slot + .slot { border-top: 1px solid var(--panel-hi); }
+  .slot-n { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; font-size: 13px; }
+  .slot-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slot.empty .slot-name { color: var(--muted); }
+  .led { width: 9px; height: 9px; border-radius: 50%; background: var(--led-off); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+  .led.ok { background: var(--led-ok); }
+  .led.warn { background: var(--led-warn); }
+  .led.missing { background: var(--led-missing); }
+
+  .notes { margin: 0 0 12px; padding: 0 0 0 2px; list-style: none; font-size: 14px; line-height: 1.35; color: var(--muted); }
+  .notes li + li { margin-top: 6px; }
+  .notes .warn::before, .notes .missing::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .notes .warn::before { background: var(--led-warn); }
+  .notes .missing::before { background: var(--led-missing); }
+  .strip-msg { margin: 0 0 12px; font-size: 15px; }
+  .strip .spacer { flex: 1; }
+
+  button, .btn { white-space: nowrap;
+    font: 600 16px/1 var(--text); border: 0; border-radius: 4px; cursor: pointer;
+    padding: 11px 14px; background: var(--accent); color: var(--accent-ink);
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.18);
+  }
+  button:hover { filter: brightness(1.06); }
+  button:active { box-shadow: inset 0 2px 0 rgba(0,0,0,.2); }
+  button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  button.quiet { background: transparent; color: var(--muted); box-shadow: none; padding: 8px 4px; font-weight: 500; }
+  button.quiet:hover { color: var(--ink); filter: none; }
+  .strip button { width: 100%; }
+  .bar-actions { display: flex; gap: 12px; align-items: center; }
+
+  footer { margin-top: 48px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+  footer p { margin: 0 0 8px; }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 20px 16px 48px; }
+    h1 { font-size: 36px; }
+    .rack { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>FST Downgrader</h1>
+    <p class="target">Makes newer presets open in <strong>FL Studio 21.2.3</strong></p>
+  </header>
+
+  <label class="drop" id="drop">
+    <input type="file" id="pick" accept=".fst" multiple>
+    <span class="drop-title">Drop .fst presets here</span>
+    <span class="drop-sub">or click to choose files. Everything stays on your computer.</span>
+  </label>
+
+  <div class="fixes">
+    <label><input type="checkbox" id="optUnknown" checked> Remove settings added after FL 21</label>
+    <label><input type="checkbox" id="optWrapper" checked> Save VST plugin data in the FL 21 format</label>
+  </div>
+
+  <div class="bar" id="bar" hidden>
+    <h2 id="count"></h2>
+    <div class="bar-actions">
+      <button class="quiet" id="clear" type="button">Clear</button>
+      <button id="all" type="button">Download all (.zip)</button>
+    </div>
+  </div>
+  <div class="rack" id="rack" aria-live="polite"></div>
+
+  <footer>
+    <p>The converter changes the version stamp to FL 21.2.3, removes settings FL 21 can't read, and relabels VST wrapper data. Plugin settings are copied over unchanged.</p>
+    <p>A yellow light means FL 21 may open that plugin with default settings. A red light means the plugin doesn't exist in FL 21.</p>
+  </footer>
+</div>
+
+<script src="fst-core.js"></script>
+<script>
+(function () {
+  'use strict';
+  const items = []; // { name, bytes, result?, error? }
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const short = (v) => v.split('.').slice(0, 3).join('.');
+
+  function options() { return { removeUnknown: $('optUnknown').checked, fixWrapper: $('optWrapper').checked }; }
+
+  function run(item) {
+    try { item.result = FST.convert(item.bytes, options()); item.error = null; }
+    catch (e) { item.result = null; item.error = e.message; }
+  }
+
+  async function addFiles(fileList) {
+    for (const f of [...fileList]) { // copy: the input's live FileList is cleared right after
+      const item = { name: f.name };
+      if (!/\.fst$/i.test(f.name)) item.error = 'Only .fst preset files can be converted.';
+      else { item.bytes = new Uint8Array(await f.arrayBuffer()); run(item); }
+      items.push(item);
+    }
+    render();
+  }
+
+  function slotsHtml(r) {
+    if (r.kind === 'mixer') {
+      const bySlot = new Map(r.plugins.filter((p) => p.slot).map((p) => [p.slot, p]));
+      let html = '';
+      for (let n = 1; n <= 10; n++) {
+        const p = bySlot.get(n);
+        html += p
+          ? `<li class="slot" title="${esc(p.internal)}"><span class="slot-n">${n}</span><span class="slot-name">${esc(p.name)}</span><span class="led ${p.status}"></span></li>`
+          : `<li class="slot empty"><span class="slot-n">${n}</span><span class="slot-name">Empty</span><span class="led"></span></li>`;
+      }
+      return `<ul class="slots" aria-label="Effect slots">${html}</ul>`;
+    }
+    if (!r.plugins.length) return '';
+    return `<ul class="slots">${r.plugins.map((p) => `<li class="slot"><span class="slot-n"></span><span class="slot-name">${esc(p.name)}</span><span class="led ${p.status}"></span></li>`).join('')}</ul>`;
+  }
+
+  function notesHtml(r) {
+    const notes = [];
+    const grouped = new Map();
+    for (const p of r.plugins) {
+      if (p.status === 'ok') continue;
+      const key = p.name + '|' + p.note;
+      if (!grouped.has(key)) grouped.set(key, Object.assign({ slots: [] }, p));
+      if (p.slot) grouped.get(key).slots.push(p.slot);
+    }
+    for (const g of grouped.values()) {
+      const where = g.slots.length ? ` (slot${g.slots.length > 1 ? 's' : ''} ${g.slots.join(', ')})` : '';
+      notes.push(`<li class="${g.status}">${esc(g.name)}${where}: ${esc(g.note)}</li>`);
+    }
+    if (r.status === 'converted') {
+      if (r.removedIds.length) notes.push(`<li>Removed ${r.removedIds.length === 1 ? 'a setting' : r.removedIds.length + ' settings'} FL 21 can't read.</li>`);
+      if (r.wrappersFixed) notes.push(`<li>Converted ${r.wrappersFixed} VST plugin${r.wrappersFixed > 1 ? 's' : ''} to the FL 21 format.</li>`);
+    }
+    return notes.length ? `<ul class="notes">${notes.join('')}</ul>` : '';
+  }
+
+  function stripHtml(item, i) {
+    const title = esc(item.name.replace(/\.fst$/i, ''));
+    if (item.error) {
+      return `<article class="strip"><h3 class="strip-name">${title}</h3><p class="strip-msg">${esc(item.error)}</p><div class="spacer"></div><button class="quiet" data-remove="${i}" type="button">Remove</button></article>`;
+    }
+    const r = item.result;
+    const ver = r.status === 'compatible'
+      ? `Saved in FL ${esc(short(r.fromVersion))}. Already opens in FL 21.`
+      : `Saved in FL ${esc(short(r.fromVersion))}, now <b>FL ${esc(short(r.toVersion))}</b>`;
+    const action = r.status === 'converted'
+      ? `<button data-download="${i}" type="button">Download</button>`
+      : `<button class="quiet" data-remove="${i}" type="button">Remove</button>`;
+    return `<article class="strip"><h3 class="strip-name">${title}</h3><p class="strip-ver">${ver}</p>${slotsHtml(r)}${notesHtml(r)}<div class="spacer"></div>${action}</article>`;
+  }
+
+  function render() {
+    $('rack').innerHTML = items.map(stripHtml).join('');
+    const ready = items.filter((x) => x.result && x.result.status === 'converted');
+    $('bar').hidden = items.length === 0;
+    $('count').textContent = `${ready.length} of ${items.length} preset${items.length === 1 ? '' : 's'} ready`;
+    $('all').hidden = ready.length < 2;
+  }
+
+  function save(name, data, type) {
+    const url = URL.createObjectURL(new Blob([data], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  $('rack').addEventListener('click', (e) => {
+    const d = e.target.closest('[data-download]');
+    if (d) { const it = items[+d.dataset.download]; save(it.name, it.result.output, 'application/octet-stream'); return; }
+    const r = e.target.closest('[data-remove]');
+    if (r) { items.splice(+r.dataset.remove, 1); render(); }
+  });
+  $('all').addEventListener('click', () => {
+    const files = items.filter((x) => x.result && x.result.status === 'converted').map((x) => ({ name: x.name, data: x.result.output }));
+    save('presets for FL 21.zip', FST.zip(files), 'application/zip');
+  });
+  $('clear').addEventListener('click', () => { items.length = 0; render(); });
+  for (const id of ['optUnknown', 'optWrapper']) $(id).addEventListener('change', () => { items.forEach((x) => x.bytes && run(x)); render(); });
+
+  $('pick').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
+  // Dropping anywhere else on the page shouldn't navigate away to the file.
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => { e.preventDefault(); if (!drop.contains(e.target)) addFiles(e.dataTransfer.files); });
+})();
+</script>
+</body>
+</html>

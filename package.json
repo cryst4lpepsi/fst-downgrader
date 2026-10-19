@@ -1,0 +1,9 @@
+{
+  "name": "fst-downgrader",
+  "version": "1.0.0",
+  "description": "Convert FL Studio .fst presets saved in newer versions so they open in FL Studio 21.2.3",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/"
+  }
+}
