@@ -14,7 +14,9 @@
   // Native plugins FL 21 ships (its Plugin database), plus the VST wrapper.
   const FL21_PLUGINS = new Set(['3x Osc', 'Audio Clip', 'Autogun', 'Automation Clip', 'BassDrum', 'BeepMap', 'BooBass', 'Control Surface', 'Dashboard', 'DirectWave', 'Distructor', 'Drumaxx', 'Drumpad', 'EQUO', 'Edison', 'Effector', 'FL Keys', 'FL Studio Mobile', 'FLEX', 'FPC', 'Frequency Shifter', 'Frequency Splitter', 'Fruit Kick', 'Fruity Balance', 'Fruity Big Clock', 'Fruity Blood Overdrive', 'Fruity Chorus', 'Fruity Compressor', 'Fruity Convolver', 'Fruity DX10', 'Fruity Dance', 'Fruity Delay 2', 'Fruity Delay 3', 'Fruity Delay Bank', 'Fruity DrumSynth Live', 'Fruity Envelope Controller', 'Fruity Fast Dist', 'Fruity Filter', 'Fruity Flanger', 'Fruity Flangus', 'Fruity Formula Controller', 'Fruity Granulizer', 'Fruity HTML NoteBook', 'Fruity Keyboard Controller', 'Fruity LSD', 'Fruity Limiter', 'Fruity Love Philter', 'Fruity Multiband Compressor', 'Fruity NoteBook', 'Fruity NoteBook 2', 'Fruity PanOMatic', 'Fruity Parametric EQ', 'Fruity Parametric EQ 2', 'Fruity Peak Controller', 'Fruity Phaser', 'Fruity Reeverb 2', 'Fruity Scratcher', 'Fruity Send', 'Fruity Slicer', 'Fruity Soft Clipper', 'Fruity Spectroman', 'Fruity Squeeze', 'Fruity Stereo Enhancer', 'Fruity Stereo Shaper', 'Fruity Video Player', 'Fruity Vocoder', 'Fruity Voltage Controller', 'Fruity WaveShaper', 'Fruity Wrapper', 'Fruity X-Y Controller', 'Fruity X-Y-Z Controller', 'Fruity dB Meter', 'GMS', 'Gross Beat', 'Hardcore', 'Harmless', 'Harmor', 'Hyper Chorus', 'Kepler', 'Layer', 'LuxeVerb', 'MIDI Out', 'Maximus', 'MiniSynth', 'Morphine', 'Multiband Delay', 'Newtime', 'Newtone', 'Ogun', 'Patcher', 'Pitch Shifter', 'Pitcher', 'Plucked!', 'PoiZone', 'Razer Chroma', 'ReWired', 'Sakura', 'Sampler', 'Sawer', 'SimSynth', 'Slicex', 'SoundFont Player', 'Soundgoodizer', 'Sytrus', 'Toxic Biohazard', 'Transient Processor', 'Transistor Bass', 'Tuner', 'VFX Color Mapper', 'VFX Envelope', 'VFX Key Mapper', 'VFX Keyboard Splitter', 'VFX Level Scaler', 'VFX Sequencer', 'Vintage Chorus', 'Vintage Phaser', 'Vocodex', 'Wave Candy', 'Wave Traveller', 'ZGameEditor Visualizer']);
   // Newest settings format FL 21 writes for each native plugin (first 4 bytes of its state).
-  const FL21_STATE_VERSIONS = { '3x Osc': 14, 'Fruity Slicer': 15, 'Fruity PanOMatic': 128, 'Soundgoodizer': 3, 'Fruity Parametric EQ 2': 7, 'Transient Processor': 1, 'Fruity Compressor': 2, 'Fruity Limiter': 7, 'Fruity Fast Dist': 192, 'Pitch Shifter': 7, 'Vintage Chorus': 1, 'Fruity Flanger': 1, 'Patcher': 4, 'EQUO': 4, 'Fruity Delay 3': 1, 'DirectWave': 38, 'Wave Candy': 9, 'Fruity Flangus': 9, 'Fruity Delay Bank': 16, 'Fruity Formula Controller': 4, 'Fruity Balance': 0, 'Fruity Chorus': 1, 'Fruity Stereo Shaper': 0, 'FL Keys': 1, 'Fruity Phaser': 1, 'Harmless': 12, 'FLEX': 1, 'Fruity Vocoder': 2, 'Distructor': 5, 'MIDI Out': 6, 'Fruity NoteBook 2': 0, 'Fruity Soft Clipper': 127, 'Fruity Multiband Compressor': 0, 'Fruity Filter': 2, 'Control Surface': 1, 'Frequency Splitter': 4, 'Fruity Blood Overdrive': 3, 'Fruity Dance': 2, 'Fruit Kick': 1, 'Fruity DX10': 2, 'Fruity Send': 0, 'Frequency Shifter': 4, 'BooBass': 1, 'Fruity Granulizer': 5, 'Transistor Bass': 2, 'Fruity Keyboard Controller': 2, 'Fruity X-Y Controller': 2, 'Razer Chroma': 1, 'Fruity X-Y-Z Controller': 3, 'LuxeVerb': 7, 'Multiband Delay': 4, 'Fruity Squeeze': 0, 'Hyper Chorus': 2, 'Vintage Phaser': 3, 'Fruity LSD': 0, 'Newtime': 1, 'Newtone': 0, 'VFX Color Mapper': 0, 'VFX Key Mapper': 2, 'VFX Level Scaler': 1, 'VFX Sequencer': 2, 'Fruity HTML NoteBook': 1, 'Fruity Spectroman': 100, 'Tuner': 1, 'Fruity DrumSynth Live': 3, 'Dashboard': 2, 'Fruity Voltage Controller': 1, 'ReWired': 1, 'SoundFont Player': 5, 'Kepler': 0, 'BeepMap': 0, 'Plucked!': 128, 'Fruity Video Player': 3 };
+  // Some plugins pack it as (version << 16) | 3, e.g. Edison 0xd0003 is v13.
+  const FL21_STATE_VERSIONS = { '3x Osc': 14, 'Fruity Slicer': 15, 'Fruity PanOMatic': 128, 'Soundgoodizer': 3, 'Fruity Parametric EQ 2': 7, 'Transient Processor': 1, 'Fruity Compressor': 2, 'Fruity Limiter': 7, 'Fruity Fast Dist': 192, 'Pitch Shifter': 7, 'Vintage Chorus': 1, 'Fruity Flanger': 1, 'Patcher': 4, 'EQUO': 4, 'Fruity Delay 3': 1, 'DirectWave': 38, 'Wave Candy': 9, 'Fruity Flangus': 9, 'Fruity Delay Bank': 16, 'Fruity Formula Controller': 4, 'Fruity Balance': 0, 'Fruity Chorus': 1, 'Fruity Stereo Shaper': 0, 'FL Keys': 1, 'Fruity Phaser': 1, 'Harmless': 12, 'FLEX': 1, 'Fruity Vocoder': 2, 'Distructor': 5, 'MIDI Out': 6, 'Fruity NoteBook 2': 0, 'Fruity Soft Clipper': 127, 'Fruity Multiband Compressor': 0, 'Fruity Filter': 2, 'Control Surface': 1, 'Frequency Splitter': 4, 'Fruity Blood Overdrive': 3, 'Fruity Dance': 2, 'Fruit Kick': 1, 'Fruity DX10': 2, 'Fruity Send': 0, 'Frequency Shifter': 4, 'BooBass': 1, 'Fruity Granulizer': 5, 'Transistor Bass': 2, 'Fruity Keyboard Controller': 2, 'Fruity X-Y Controller': 2, 'Razer Chroma': 1, 'Fruity X-Y-Z Controller': 3, 'LuxeVerb': 7, 'Multiband Delay': 4, 'Fruity Squeeze': 0, 'Hyper Chorus': 2, 'Vintage Phaser': 3, 'Fruity LSD': 0, 'Newtime': 1, 'Newtone': 0, 'VFX Color Mapper': 0, 'VFX Key Mapper': 2, 'VFX Level Scaler': 1, 'VFX Sequencer': 2, 'Fruity HTML NoteBook': 1, 'Fruity Spectroman': 100, 'Tuner': 1, 'Fruity DrumSynth Live': 3, 'Dashboard': 2, 'Fruity Voltage Controller': 1, 'ReWired': 1, 'SoundFont Player': 5, 'Kepler': 0, 'BeepMap': 0, 'Plucked!': 128, 'Fruity Video Player': 3,
+    'Edison': 0xd0003, 'Fruity Convolver': 0xf0003, 'Fruity Love Philter': 0xc0003, 'Fruity WaveShaper': 0x40003, 'Gross Beat': 0x80003, 'Maximus': 0xf0003 };
 
   // Newer settings formats whose layout is unchanged from FL 21's, so relabelling the version is
   // enough. EQ2 v8 (FL 24+) is the same 354 bytes as v7, and FL 21 crashes on the v8 label.
@@ -81,6 +83,13 @@
     return false;
   }
 
+  function newerFormat(p) {
+    const known = FL21_STATE_VERSIONS[p.internal], v = p.stateVersion;
+    if (known === undefined || v === null) return false;
+    if (known > 0xffff) return (v & 0xffff) === 3 && v > known;
+    return v < 256 && v > known;
+  }
+
   // Fruity Wrapper state = u32 version, then chunks of (u32 id, u64 size, bytes).
   function wrapperChunksKnown(d) {
     let off = 4;
@@ -120,9 +129,10 @@
       } else if (SAME_LAYOUT[p.internal] && p.stateVersion === SAME_LAYOUT[p.internal].version && p.stateEvent.data.length === SAME_LAYOUT[p.internal].size) {
         p.status = 'ok';
         p.relabelTo = FL21_STATE_VERSIONS[p.internal];
-      } else if (p.internal in FL21_STATE_VERSIONS && p.stateVersion !== null && p.stateVersion < 256 && p.stateVersion > FL21_STATE_VERSIONS[p.internal]) {
+      } else if (newerFormat(p)) {
+        const v = (x) => (x > 0xffff ? x >>> 16 : x);
         p.status = 'warn';
-        p.note = `Settings are saved in a newer format (v${p.stateVersion}; FL 21 uses v${FL21_STATE_VERSIONS[p.internal]}). It may open with default settings.`;
+        p.note = `Settings are saved in a newer format (v${v(p.stateVersion)}; FL 21 uses v${v(FL21_STATE_VERSIONS[p.internal])}). FL 21 may load it with default settings or fail to load it.`;
       } else {
         p.status = 'ok';
       }

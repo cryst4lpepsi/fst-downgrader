@@ -64,6 +64,16 @@ test('VST wrapper settings v12 are relabelled v10 when every chunk is one FL 21 
   assert.strictEqual(unknown.wrappersFixed, 0);
 });
 
+test('flags newer settings formats for plugins that pack the version as (version << 16) | 3', () => {
+  const grossBeat = (header) => FST.convert(preset({ format: 48, version: '25.1.6.4997', build: 4997, events: [
+    [201, utf16('Gross Beat')], [213, new Uint8Array(new Uint32Array([header, 0]).buffer)],
+  ] })).plugins[0];
+  assert.strictEqual(grossBeat(0x80003).status, 'ok');
+  const newer = grossBeat(0x90003);
+  assert.strictEqual(newer.status, 'warn');
+  assert.match(newer.note, /\(v9; FL 21 uses v8\)/);
+});
+
 test('FL21 preset is left alone', () => {
   const r = FST.convert(fl21);
   assert.strictEqual(r.status, 'compatible');

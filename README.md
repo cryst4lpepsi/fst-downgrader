@@ -10,6 +10,19 @@ FL Studio refuses presets saved in a newer version, or loads them and then fails
 
 ![The converter showing a preset with Parametric EQ 2 and Soundgoodizer, converted from FL 25.1.6 to FL 21.2.3](docs/screenshot.png)
 
+## Supported versions
+
+Presets from any version newer than 21.2.3 are converted: the FL 24 betas (21.2.99, 24.0.99), FL 2024 (24.x) and FL 2025 (25.x). Presets from 21.2.3 or older already open in FL 21 and are left unchanged.
+
+Checked so far:
+
+| Saved in | How |
+|---|---|
+| 25.1.6 | Converted presets opened in FL 21.2.3, including three Parametric EQ 2s |
+| 24.0.99, 24.1.0, 24.1.2, 21.2.99 | FL 2024's factory presets convert cleanly; plugins new in FL 24 (Spreader, Low Lifter, Transporter, Kepler Exo) are flagged |
+
+If a preset from another version doesn't load in FL 21, please open an issue and attach it.
+
 ## Command line
 
 Convert whole preset folders at once (needs [Node.js](https://nodejs.org) 18 or newer):
